@@ -124,48 +124,53 @@ if __name__ == '__main__':
             embed = encoder.embed_utterance(preprocessed_wav)
             print("Created the embedding")
 
-            input_text = input(
-                "Write a sentence (+-20 words) to be synthesized:\n")
-            ss = syllable()
-            text = ss.soundex(input_text)
-            print(f"Outpur soundex -> {text}")
+            while True:
+                input_text = input(
+                    "Write a sentence (+-20 words) to be synthesized:\n\n-> ")
+                ss = syllable()
+                text = ss.soundex(input_text)
+                print(f"\nOutput soundex -> \033[92m {text} \033[0m \n")
 
-            texts = [text]
-            embeds = [embed]
-            specs = synthesizer.synthesize_spectrograms(texts, embeds)
-            spec = specs[0]
-            print("Created the mel spectrogram")
+                texts = [text]
+                embeds = [embed]
+                specs = synthesizer.synthesize_spectrograms(texts, embeds)
+                spec = specs[0]
+                print("Created the mel spectrogram")
 
-            print("Synthesizing the waveform:")
+                print("Synthesizing the waveform:")
 
-            if args.seed is not None:
-                torch.manual_seed(args.seed)
-                vocoder.load_model(args.voc_model_fpath)
+                if args.seed is not None:
+                    torch.manual_seed(args.seed)
+                    vocoder.load_model(args.voc_model_fpath)
 
-            generated_wav = vocoder.infer_waveform(spec)
+                generated_wav = vocoder.infer_waveform(spec)
 
-            generated_wav = np.pad(
-                generated_wav, (0, synthesizer.sample_rate), mode="constant")
+                generated_wav = np.pad(
+                    generated_wav, (0, synthesizer.sample_rate), mode="constant")
 
-            generated_wav = encoder.preprocess_wav(generated_wav)
+                generated_wav = encoder.preprocess_wav(generated_wav)
 
-            if not args.no_sound:
-                try:
-                    sd.stop()
-                    sd.play(generated_wav, synthesizer.sample_rate)
-                except sd.PortAudioError as e:
-                    print("\nCaught exception: %s" % repr(e))
-                    print(
-                        "Continuing without audio playback. Suppress this message with the \"--no_sound\" flag.\n")
-                except:
-                    raise
+                if not args.no_sound:
+                    try:
+                        sd.stop()
+                        sd.play(generated_wav, synthesizer.sample_rate)
+                    except sd.PortAudioError as e:
+                        print("\nCaught exception: %s" % repr(e))
+                        print(
+                            "Continuing without audio playback. Suppress this message with the \"--no_sound\" flag.\n")
+                    except:
+                        raise
 
-            filename = "hasil_cloning_%02d.wav" % num_generated
-            print(generated_wav.dtype)
-            sf.write(filename, generated_wav.astype(
-                np.float32), synthesizer.sample_rate)
-            num_generated += 1
-            print("\nSaved output as %s\n\n" % filename)
+                filename = "hasil_cloning_%02d.wav" % num_generated
+                print(generated_wav.dtype)
+                sf.write(filename, generated_wav.astype(
+                    np.float32), synthesizer.sample_rate)
+                num_generated += 1
+                print("\nSaved output as %s\n\n" % filename)
+
+                confirm = input("write a sentence again? n/y : ")
+                if confirm is "n":
+                    break
 
         except Exception as e:
             print("Caught exception: %s" % repr(e))
