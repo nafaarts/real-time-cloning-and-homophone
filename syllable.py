@@ -107,51 +107,83 @@ class syllable:
         letters, arrange = self.split_letters(string)
         return self.split_syllables_from_letters(letters, arrange)
 
+    def getVocal(self, word):
+        vocal_char = ["A", "I", "U", "E", "O", "a", "i", "u", "e", "o"]
+        for vocal in word:
+            if vocal in vocal_char:
+                return vocal
+
+    def show_unknown(self, words):
+        if not words:
+            print("\033[92m Perfect! \033[0m")
+        else:
+            undefined_word = []
+            for word in words:
+                if word not in undefined_word:
+                    undefined_word.append(word)
+
+        print(f"Undefined : \033[1;31;40m {undefined_word}  - {len(undefined_word)} \033[0m")
+
     def soundex(self, string):
         syllable = self.split_syllables(string)
 
         with open("word/word_bank.txt", "r") as f:
             data = f.readlines()
 
-        symbols = [",", " ", ".", "!", "?"]
+        symbols = [",", " ", ".", "!", "?", "-"]
 
         sentence = []
-        sentence2 = ""
+        sentence_to_say = []
+        undefined_word = []
 
-        for kata in syllable:
-            x = soundex.encode_word(kata)
+        for word in syllable:
+            # print(word)
+            xvocal = self.getVocal(word)
+            x = soundex.encode_word(word)
+            # print(f"soundex x : {x} | {xvocal} - {word}")
+            undefined = False
             for line in data:
                 y = soundex.encode_word(line.strip())
-                if x == y:
-                    sentence += line
-                    sentence2 += line
+                yvocal = self.getVocal(line.strip())
+                if y is x and yvocal is xvocal:
+                    # print(f"soundex x : {y} | {yvocal} - {line}")
+                    sentence.append(line.strip())
+                    sentence_to_say.append(line.strip())
+                    undefined = False
                     break
-                elif kata in symbols:
-                    sentence += kata
-                    sentence2 += kata
+                elif word in symbols:
+                    sentence.append(word)
+                    sentence_to_say.append(word)
+                    undefined = False
                     break
+                undefined = True
 
-        result = ""
-        for kata in sentence2:
-            if kata == '\n':
-                result += " "
-            else:
-                result += kata
+            if undefined:
+                undefined_word.append(word)
+                sentence.append(f"\033[1;31;40m {word} \033[0m")
+                sentence_to_say.append(word)
 
+
+        self.show_unknown(undefined_word)
+
+        # export sentence
+
+        result = " "
+        result = result.join(sentence_to_say)
         return result
 
 
-if __name__ == '__main__':
-    import argparse
+# if __name__ == '__main__':
+#     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Split string into syllables token.")
-    parser.add_argument("string", help="string to be splitted.")
+#     parser = argparse.ArgumentParser(
+#         description="Split string into syllables token.")
+#     parser.add_argument("string", help="string to be splitted.")
 
-    args = parser.parse_args()
+#     args = parser.parse_args()
 
-    ss = syllable()
+#     ss = syllable()
 
-    syllables = ss.soundex(args.string)
+#     syllables = ss.soundex(args.string)
 
-    print(syllables)
+#     print(syllables)
