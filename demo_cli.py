@@ -13,6 +13,7 @@ import torch
 import sys
 from audioread.exceptions import NoBackendError
 from syllable import syllable
+from recorder import recorder
 
 if __name__ == '__main__':
     ## Info & args
@@ -105,11 +106,36 @@ if __name__ == '__main__':
 
     print("Interactive generation loop")
     num_generated = 0
-    while True:
+    clone_proses = True
+    while clone_proses:
         try:
-            message = "Reference voice: enter an audio filepath of a voice to be cloned (mp3, " \
-                      "wav, m4a, flac, ...):\n"
-            in_fpath = Path(input(message).replace("\"", "").replace("\'", ""))
+            rc = recorder()
+            filename = "samples/output.wav"
+            confirm = ""
+            while confirm not in ['y', 'n']:
+                confirm = input("Apakah ingin merekam suara ? y/n ")
+                if confirm == 'y':
+                    rc.record(44100, 5, filename)
+                    listen = ""
+                    while listen not in ['y', 'n']:
+                        listen = input("Apakah ingin mendengar lagi? y/n ")
+                        if listen == 'y':
+                            listen = ""
+                            rc.play_rec(filename)
+                    confirm_record = ""
+                    while confirm_record not in ['y', 'n']:
+                        confirm_record = input("Apakah ingin menggunakan sample ini? y/n ")
+                        if confirm_record == 'y':
+                            get_sample = filename
+                        else:
+                            confirm = ""
+                elif confirm == 'n':
+                    get_sample = 'samples/' + input("Masukan sample path -> samples/")
+                    break
+                
+            # message = "Reference voice: enter an audio filepath of a voice to be cloned (mp3, " \
+            #           "wav, m4a, flac, ...):\n"
+            in_fpath = Path(get_sample.replace("\"", "").replace("\'", ""))
 
             if in_fpath.suffix.lower() == ".mp3" and args.no_mp3_support:
                 print("Can't Use mp3 files please try again:")
@@ -167,11 +193,12 @@ if __name__ == '__main__':
                     np.float32), synthesizer.sample_rate)
                 num_generated += 1
                 print("\nSaved output as %s\n\n" % filename)
-
-                confirm = input("write a sentence again? n/y : ")
-                if confirm is "n":
+                
+                confirm_exit = input("write a sentence again? y/n ")
+                if confirm_exit == 'n' :
                     break
 
+        
         except Exception as e:
             print("Caught exception: %s" % repr(e))
             print("Restarting\n")
